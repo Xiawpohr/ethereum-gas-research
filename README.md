@@ -1,4 +1,6 @@
-# Simulating the process of blob price discovery under various demand distributions
+# The Target Demand Paradox in the Blob Fee Market: An Analysis of EIP-4844 & EIP-7961
+
+> Thanks to [Chih Cheng Liang](https://x.com/ChihChengLiang) for feedbacks and discusstions.
 
 ## Introduction
 
@@ -8,8 +10,8 @@ The prevailing explanation for the persistently low blob prices is the [cold-sta
 
 In this research, I try to
 - Find out how much blob demand needs to be created to bring the blob fee market into equilibrium
-- Describe the blob demand paradox
-- Simulate where the blob fee is headed after the Pectra fork
+- Describe the target demand paradox
+- Simulate where the blob fee is potentially headed after the Pectra fork
 
 
 ## The blob fee mechanism
@@ -28,7 +30,9 @@ The parameter `BLOB_BASE_FEE_UPDATE_FRACTION` controls the maximum rate of chang
 
 ## How blob demand effect the blob price
 
-To gain initial insights into how blob demand impacts blob fees through the mechanism mentioned above, we conducted five simulations under different conditions to observe the changes in `excess_blob_gas` and `base_fee_per_blob_gas`
+To gain initial intuitions into how blob demand impacts blob fees through the mechanism mentioned above, we conducted five simulations under different conditions to observe the changes in `excess_blob_gas` and `base_fee_per_blob_gas`.
+
+The time range is 14,400 blocks (equivalent to 2 days). Each simulation is run 200 times, and the quartiles of excess_blob_gas are calculated for each block. The base_fee_per_blob_gas is then determined using the mean of excess_blob_gas.
 
 The parameters are set as same as EIP-4844.
 - `TARGET_BLOB_PER_BLOCK`: 3
@@ -36,37 +40,34 @@ The parameters are set as same as EIP-4844.
 - `MIN_BASE_FEE_PER_BLOB_GAS`: 1 wei
 - `BLOB_BASE_FEE_UPDATE_FRACTION`: 3338477
 
-### Case 1: The blob demand follows a Poisson distribution with lambda = 1
+### Scenario 1: The blob demand follows a Poisson distribution with lambda = 1
 
 The mean and variance of blob consumption per block are both 1, which is below `TARGET_BLOB_PER_BLOCK`, indicating an oversupply situation. As expected, the results show that `base_fee_per_blob_gas` remains at the `MIN_BASE_FEE_PER_BLOB_GAS` value.
 
 ![eip4844-t14400-r200-c1](./img/eip4844-t14400-r200-c1.png)
 
-### Case 2: The blob demand follows a Poisson distribution with lambda = 5
+### Scenario 2: The blob demand follows a Poisson distribution with lambda = 5
 
 The mean and variance of blob consumption per block are both 5, which is more than `TARGET_BLOB_PER_BLOCK`, indicating higher-than-desired blob demand. If demand remains high, `excess_blob_gas` will continue to increase, causing `base_fee_per_blob_gas` to rise exponentially. As expected, the results confirm this trend.
 
 ![eip4844-t14400-r200-c2](./img/eip4844-t14400-r200-c2.png)
 
-### Case 3: The blob demand follows a Poisson distribution with lambda = 3
+### Scenario 3: The blob demand follows a Poisson distribution with lambda = 3
 
-The mean blob consumption per block is 3, matching TARGET_BLOB_PER_BLOCK, representing a balanced state. In this scenario, `base_fee_per_blob_gas` is expected to remain stable without any upward or downward trend. The results confirm this, showing that `base_fee_per_blob_gas` stays at `MIN_BASE_FEE_PER_BLOB_GAS`, even though `excess_blob_gas` is higher than in Case 1.
+The mean blob consumption per block is 3, matching TARGET_BLOB_PER_BLOCK, representing a balanced state. In this scenario, `base_fee_per_blob_gas` is expected to remain stable without any upward or downward trend. The results confirm this, showing that `base_fee_per_blob_gas` stays at `MIN_BASE_FEE_PER_BLOB_GAS`, even though `excess_blob_gas` is higher than in Scenario 1.
 
 ![eip4844-t14400-r200-c3](./img/eip4844-t14400-r200-c3.png)
 
-### Case 4: The blob demand follows an uniform distribution
+### Scenario 4: The blob demand follows an uniform distribution
 
-The mean of the blob consumption per block is 3, which is same as the case 3. The variance of it is 4.0, which is more than the case 3. That means the blob usage is more volatile in this situation.
-The result shows `excess_blob_gas` grows toward a level at which `base_fee_per_blob_gas` is above `MIN_BASE_FEE_PER_BLOB_GAS`. And `excess_blob_gas` and `base_fee_per_blob_gas` tend to reach an equilibrium after a period of time.
-
-The mean blob consumption per block is 3, the same as in Case 3, but with a higher variance of 4.0, indicating greater volatility in blob usage. The results show that `excess_blob_gas` increases to a level where `base_fee_per_blob_gas` rises above `MIN_BASE_FEE_PER_BLOB_GAS`. Over time, both `excess_blob_gas` and `base_fee_per_blob_gas` tend to stabilize, reaching an equilibrium.
+The mean blob consumption per block is 3, the same as in Scenario 3, but with a higher variance of 4.0, indicating greater volatility in blob usage. The results show that `excess_blob_gas` increases to a level where `base_fee_per_blob_gas` rises above `MIN_BASE_FEE_PER_BLOB_GAS`. Over time, both `excess_blob_gas` and `base_fee_per_blob_gas` tend to stabilize, reaching an equilibrium.
 
 ![eip4844-t14400-r200-c4](./img/eip4844-t14400-r200-c4.png)
 
-### Case 5: The blob demand follows a bimodal distribution with mean = 3
+### Scenario 5: The blob demand follows a bimodal distribution with mean = 3
 
-What happens when blob demand becomes highly volatile? In Case 5, there is a 50% chance of consuming 0 blobs and a 50% chance of consuming 6 blobs. Despite this fluctuation, the mean of blob consumption remains 3, equal to TARGET_BLOB_PER_BLOCK, but with a higher variance of 9.0.
-The results are similar to Case 4, where `excess_blob_gas` and `base_fee_per_blob_gas` tend to gradually stabilize over time. However, both values in Case 5 are higher than those observed in Case 4.
+What happens when blob demand becomes highly volatile? In Scenario 5, there is a 50% chance of consuming 0 blobs and a 50% chance of consuming 6 blobs. Despite this fluctuation, the mean of blob consumption remains 3, equal to TARGET_BLOB_PER_BLOCK, but with a higher variance of 9.0.
+The results are similar to Scenario 4, where `excess_blob_gas` and `base_fee_per_blob_gas` tend to gradually stabilize over time. However, both values in Scenario 5 are higher than those observed in Scenario 4.
 
 ![eip4844-t14400-r200-c5](./img/eip4844-t14400-r200-c5.png)
 
@@ -90,16 +91,16 @@ The results indicate that effective demand falls between 3.13 and 3.20 blobs. Wh
 ![eip4844-effective-demand](./img/eip4844-effective-demand.gif)
 
 
-## Blob demand paradox
+## Target demand paradox
 
 The pricing mechanism aims to control blob usage at a specific target value. However, a paradox emerges when this target falls outside the range of effective demand. In such cases, the blob fee market cannot reach equilibrium despite average blob usage approximating the target value, or equilibrium can only be achieved by consuming more blobs than the target specifies.
 
-Demand variance represents another critical factor. As variance increases, the range of effective demand widens correspondingly. This explains why we achieve equilibrium in Cases 4 and 5, where the target value falls within the expanded effective demand range.
+Demand variance represents another critical factor. As variance increases, the range of effective demand widens correspondingly. This explains why we achieve equilibrium in Scenario 4 and 5, where the target value falls within the expanded effective demand range.
 
 
 ## EIP-4844 status quo
 
-Based on current data from Dune, the distribution of `blobs_per_block` more closely resembles Case 5. Optimism rollups typically utilize 5 or 6 blobs, while ZK rollups prefer 1 or 2 blobs. This pattern has fortunately spared the Ethereum ecosystem from confronting the demand paradox.
+Based on current data from Dune, the distribution of `blobs_per_block` more closely resembles Scenario 5. Optimistic rollups typically utilize 5 or 6 blobs, while ZK rollups prefer 1 or 2 blobs. This pattern has fortunately spared the Ethereum ecosystem from confronting the demand paradox.
 
 However, demand must still remain within the effective demand range for 1.5-2 days to achieve market equilibrium. Unfortunately, we have yet to meet this criterion in the year following the EIP-4844 launch.
 
@@ -119,7 +120,9 @@ The economic implications of these parameters on the blob fee market require tho
 
 In either case, `excess_blob_gas` fails to accumulate and `base_fee_per_blob_gas` remains fixed at `MIN_BASE_FEE_PER_BLOB_GAS`. This indicates that the target blob demand is insufficient no matter what variance is.
 
-Our calculations place effective demand between 6.57 and 6.72 blobs, suggesting a high probability that the blob fee market will face the demand paradox. When the market consumes an average of 6 blobs, it still cannot reach equilibrium or discover the fair price. To force the market toward equilibrium, consumption would need to exceed 6.57 blobs per block, significantly surpassing the target value.
+**Our calculations place effective demand between 6.57 and 6.72 blobs, suggesting a high probability that the blob fee market will face the target demand paradox.** When the market consumes an average of 6 blobs, it still cannot reach equilibrium or discover the fair price. To force the market toward equilibrium, consumption would need to exceed 6.57 blobs per block, significantly surpassing the target value.
+
+![](https://github.com/Xiawpohr/ethereum-gas-research/blob/main/img/eip7691-effective-demand.gif?raw=true)
 
 
 ## What can we do?
@@ -143,8 +146,9 @@ Determining a fair price for blob data is crucial in many aspects. A healthy blo
 To efficiently discover this fair price, we can implement a mechanism similar to a Dutch auction by initially setting a high `excess_blob_gas` value, which translates to a high `base_fee_per_blob_gas`. This fee will gradually decrease until demand rises to meet the effective demand. While building demand from the ground up might take months, a Dutch auction-like process could potentially achieve price discovery within days.
 
 
-## Refeerences
+## References
 
+- All simulations are run on the [Jupyter Notebook](https://github.com/Xiawpohr/ethereum-gas-research)
 - [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844)
 - [EIP-7691](https://eips.ethereum.org/EIPS/eip-7691)
 - [EIP-7762](https://eips.ethereum.org/EIPS/eip-7762)
